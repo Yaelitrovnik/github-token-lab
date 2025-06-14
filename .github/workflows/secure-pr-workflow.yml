@@ -1,0 +1,47 @@
+# .github/workflows/secure-pr-workflow.yml
+name: Secure PR Workflow
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  secure-pr-job:
+    runs-on: ubuntu-latest
+    # Only run certain steps if the PR is from the same repository (not a fork)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Run tests (safe for forks)
+        run: |
+          echo "Running tests that don't require secrets..."
+          # Run tests that don't need authentication
+      
+      - name: Check if PR is from fork
+        id: check-fork
+        run: |
+          if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+            echo "is_fork=true" >> $GITHUB_OUTPUT
+            echo "This PR is from a fork. Will skip steps that require secrets."
+          else
+            echo "is_fork=false" >> $GITHUB_OUTPUT
+            echo "This PR is from the same repository. Can use secrets safely."
+          fi
+      
+      - name: Steps requiring secrets (not accessible to forks)
+        if: steps.check-fork.outputs.is_fork == 'false'
+        run: |
+          echo "Performing actions that require secrets..."
+          # These steps only run for PRs from the same repository
+          # API_KEY is accessible here
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+      
+      - name: Explain security measures
+        run: |
+          echo "Security measures for PRs:"
+          echo "1. GitHub automatically withholds secrets from workflows triggered by forks"
+          echo "2. Secrets are only available if the PR is from the same repository"
+          echo "3. GITHUB_TOKEN for fork PRs has read-only permissions by default"
+          echo "4. Use conditional steps to prevent exposure in fork contexts"
