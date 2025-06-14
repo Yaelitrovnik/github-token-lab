@@ -1,0 +1,24 @@
+# .github/workflows/github-token.yml
+name: GitHub Token Demo
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  repo-info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Repository Info
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Owner: ${{ github.repository_owner }}"
+          
+          # Use GitHub API with GITHUB_TOKEN to get more info
+          REPO_INFO=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }})
+          
+          echo "Repository full name: $(echo $REPO_INFO | jq -r '.full_name')"
+          echo "Stars: $(echo $REPO_INFO | jq -r '.stargazers_count')"
+          echo "Forks: $(echo $REPO_INFO | jq -r '.forks_count')"
+          echo "Created at: $(echo $REPO_INFO | jq -r '.created_at')"
