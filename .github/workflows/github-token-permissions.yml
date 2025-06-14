@@ -3,7 +3,7 @@ name: GitHub Token with Permissions
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 # Define specific permissions for the GITHUB_TOKEN
 permissions:
