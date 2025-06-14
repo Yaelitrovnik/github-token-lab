@@ -1,0 +1,44 @@
+# .github/workflows/github-token-permissions.yml
+name: GitHub Token with Permissions
+
+on:
+  push:
+    branches: [ main ]
+
+# Define specific permissions for the GITHUB_TOKEN
+permissions:
+  contents: read    # Read access to repository contents
+  issues: write     # Write access to issues
+
+jobs:
+  token-permissions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: List Repository Files (read permission)
+        run: ls -la
+      
+      - name: Create Issue (write permission)
+        run: |
+          # Create an issue using the GitHub API
+          ISSUE_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues \
+            -d '{
+              "title": "Automated Issue from Workflow",
+              "body": "This issue was created by a GitHub Actions workflow using GITHUB_TOKEN with issues:write permission.",
+              "labels": ["automated"]
+            }')
+          
+          ISSUE_NUMBER=$(echo $ISSUE_RESPONSE | jq -r '.number')
+          ISSUE_URL=$(echo $ISSUE_RESPONSE | jq -r '.html_url')
+          
+          if [ "$ISSUE_NUMBER" != "null" ]; then
+            echo "Issue #$ISSUE_NUMBER created successfully: $ISSUE_URL"
+          else
+            echo "Error creating issue: $(echo $ISSUE_RESPONSE | jq -r '.message')"
+            exit 1
+          fi
